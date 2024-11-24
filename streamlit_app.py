@@ -2,15 +2,9 @@ import streamlit as st
 import google.generativeai as genai
 import pandas as pd
 from datetime import datetime
-from supabase import create_client, Client
 
 # Configure the API key securely from Streamlit's secrets
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-
-# Initialize Supabase connection
-url = st.secrets["SUPABASE_URL"]
-key = st.secrets["SUPABASE_KEY"]
-supabase: Client = create_client(url, key)
 
 # Streamlit App UI
 st.title("Advanced Product Feedback Collection System")
@@ -72,77 +66,134 @@ with st.form(key="feedback_form"):
     feature_flexibility = st.slider("How flexible are the product's features to cater to different business needs?", min_value=1, max_value=5, step=1)
     demo_experience = st.slider("How would you rate the demo experience of the product?", min_value=1, max_value=5, step=1)
     
-    # Collect user ID (optional, but helps with segregating data)
-    user_id = st.text_input("Please enter your User ID (optional)")
-    
     # Submit button
     submit_button = st.form_submit_button(label="Submit Feedback")
 
 if submit_button:
     st.write("Thank you for your feedback!")
 
-    # Get timestamp for submission
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Combine feedback into a single string to pass to Gemini
+    feedback = (
+        f"Satisfaction Rating: {satisfaction}\n"
+        f"Usability Rating: {usability}\n"
+        f"Design Quality Rating: {design_quality}\n"
+        f"Ease of Use: {ease_of_use}\n"
+        f"Features Liked: {feature_feedback}\n"
+        f"Suggestions for Improvement: {improvement_suggestions}\n"
+        f"Customer Support Rating: {support_feedback}\n"
+        f"Feature Requests: {feature_requests}\n"
+        f"Pricing Feedback: {pricing_feedback}\n"
+        f"Overall Feedback: {overall_feedback}\n"
+        f"Ease of Integration: {ease_of_integration}\n"
+        f"Product Stability: {product_stability}\n"
+        f"Performance: {performance}\n"
+        f"Security Features: {security_features}\n"
+        f"Product Updates: {product_updates}\n"
+        f"Onboarding Process: {onboarding_process}\n"
+        f"Training Materials: {training_materials}\n"
+        f"User Interface: {user_interface}\n"
+        f"Documentation: {documentation}\n"
+        f"Language Support: {language_support}\n"
+        f"Mobile Experience: {mobile_experience}\n"
+        f"Feature Relevance: {feature_relevance}\n"
+        f"Data Analysis: {data_analysis}\n"
+        f"Collaboration Tools: {collaboration_tools}\n"
+        f"Customization Options: {customization_options}\n"
+        f"Scalability: {scalability}\n"
+        f"Product Value: {product_value}\n"
+        f"Third Party Integration: {third_party_integration}\n"
+        f"Data Privacy: {data_privacy}\n"
+        f"Customer Support Timeliness: {customer_support_timeliness}\n"
+        f"Live Chat Experience: {live_chat_experience}\n"
+        f"Billing Satisfaction: {billing_satisfaction}\n"
+        f"User Community: {user_community}\n"
+        f"Updates Frequency: {updates_frequency}\n"
+        f"Feature Flexibility: {feature_flexibility}\n"
+        f"Demo Experience: {demo_experience}\n"
+        f"User Role: {user_role}\n"
+        f"Company Size: {company_size}\n"
+        f"Industry: {industry}\n"
+        f"Platform: {platform}\n"
+        f"Device Type: {device_type}\n"
+        f"Usage Frequency: {usage_frequency}\n"
+    )
 
-    # Prepare feedback data
+    # Add timestamp and user ID (for tracking if needed)
+    user_id = st.text_input("Please enter your User ID (optional)")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    feedback_with_meta = f"Timestamp: {timestamp}\nUser ID: {user_id}\n\n{feedback}"
+
+    # Log feedback to a CSV file (can be extended to a database)
     feedback_data = {
-        "timestamp": timestamp,
-        "user_id": user_id,
-        "satisfaction": satisfaction,
-        "usability": usability,
-        "design_quality": design_quality,
-        "ease_of_use": ease_of_use,
-        "feature_feedback": feature_feedback,
-        "improvement_suggestions": improvement_suggestions,
-        "support_feedback": support_feedback,
-        "feature_requests": feature_requests,
-        "pricing_feedback": pricing_feedback,
-        "overall_feedback": overall_feedback,
-        "ease_of_integration": ease_of_integration,
-        "product_stability": product_stability,
-        "performance": performance,
-        "security_features": security_features,
-        "product_updates": product_updates,
-        "onboarding_process": onboarding_process,
-        "training_materials": training_materials,
-        "user_interface": user_interface,
-        "documentation": documentation,
-        "language_support": language_support,
-        "mobile_experience": mobile_experience,
-        "feature_relevance": feature_relevance,
-        "data_analysis": data_analysis,
-        "collaboration_tools": collaboration_tools,
-        "customization_options": customization_options,
-        "scalability": scalability,
-        "product_value": product_value,
-        "third_party_integration": third_party_integration,
-        "data_privacy": data_privacy,
-        "customer_support_timeliness": customer_support_timeliness,
-        "live_chat_experience": live_chat_experience,
-        "billing_satisfaction": billing_satisfaction,
-        "user_community": user_community,
-        "updates_frequency": updates_frequency,
-        "feature_flexibility": feature_flexibility,
-        "demo_experience": demo_experience
+        "timestamp": [timestamp],
+        "user_id": [user_id],
+        "satisfaction": [satisfaction],
+        "usability": [usability],
+        "design_quality": [design_quality],
+        "ease_of_use": [ease_of_use],
+        "feature_feedback": [feature_feedback],
+        "improvement_suggestions": [improvement_suggestions],
+        "support_feedback": [support_feedback],
+        "feature_requests": [feature_requests],
+        "pricing_feedback": [pricing_feedback],
+        "overall_feedback": [overall_feedback],
+        "ease_of_integration": [ease_of_integration],
+        "product_stability": [product_stability],
+        "performance": [performance],
+        "security_features": [security_features],
+        "product_updates": [product_updates],
+        "onboarding_process": [onboarding_process],
+        "training_materials": [training_materials],
+        "user_interface": [user_interface],
+        "documentation": [documentation],
+        "language_support": [language_support],
+        "mobile_experience": [mobile_experience],
+        "feature_relevance": [feature_relevance],
+        "data_analysis": [data_analysis],
+        "collaboration_tools": [collaboration_tools],
+        "customization_options": [customization_options],
+        "scalability": [scalability],
+        "product_value": [product_value],
+        "third_party_integration": [third_party_integration],
+        "data_privacy": [data_privacy],
+        "customer_support_timeliness": [customer_support_timeliness],
+        "live_chat_experience": [live_chat_experience],
+        "billing_satisfaction": [billing_satisfaction],
+        "user_community": [user_community],
+        "updates_frequency": [updates_frequency],
+        "feature_flexibility": [feature_flexibility],
+        "demo_experience": [demo_experience],
+        "user_role": [user_role],
+        "company_size": [company_size],
+        "industry": [industry],
+        "platform": [platform],
+        "device_type": [device_type],
+        "usage_frequency": [usage_frequency]
     }
 
-    # Insert feedback into Supabase
-    response = supabase.table('feedback').insert(feedback_data).execute()
+    feedback_df = pd.DataFrame(feedback_data)
+    feedback_df.to_csv("feedback.csv", mode='a', header=False, index=False)
 
-    if response.status_code == 201:
-        st.success("Feedback submitted successfully!")
-    else:
-        st.error("Error submitting feedback.")
-
-# Viewing Feedback Section (Optional - segregate by user ID)
-if st.button("View My Feedback"):
-    if user_id:
-        feedback_data = supabase.table('feedback').select('*').eq('user_id', user_id).execute()
+    # Use Gemini API to generate actionable insights based on feedback
+    try:
+        # Load and configure the model
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
-        if feedback_data.status_code == 200 and feedback_data.data:
-            feedback_df = pd.DataFrame(feedback_data.data)
-            st.write(feedback_df)
-        else:
-            st.error("No feedback found for your user ID.")
-    else:
-        st.error("Please enter a valid User ID to view your feedback.")
+        # Generate insights from the feedback
+        prompt = f"Given the following user feedback, generate actionable insights for the product team:\n\n{feedback_with_meta}"
+        response = model.generate_content(prompt)
+        
+        # Display actionable insights
+        st.subheader("Actionable Insights for the Product Team:")
+        st.write(response.text)
+    
+    except Exception as e:
+        st.error(f"Error: {e}")
+
+# Display previously collected feedback if needed
+if st.button("View Collected Feedback"):
+    try:
+        feedback_df = pd.read_csv("feedback.csv")
+        st.write(feedback_df.tail(10))  # Show last 10 feedbacks
+    except Exception as e:
+        st.error(f"Error loading feedback data: {e}")
